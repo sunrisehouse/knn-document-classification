@@ -14,19 +14,19 @@ def main(args, logger):
 
     preprocessor = Preprocessor(args.data_dir, 'BBC_News_Data')
     x_train, y_train, x_test, y_test = preprocessor.preprocess()
- 
+
     
     ### EDIT HERE ###
     config = {
-        "student_id": None,
-        "student_name": None,
+        "student_id": '2016311595',
+        "student_name": '한정우',
 
         "k": args.k,            # select K among 7, 9 or 11
         "metric": args.metric   # select distance metric among 'c' for cosine similarity or 'm' for manhattan
     }
     ### END ###
 
-    model = KNN(config)
+    model = KNN(logger, config)
     preds = model.predict(x_train, y_train, x_test)
 
     result = list()

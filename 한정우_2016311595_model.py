@@ -6,6 +6,8 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize 
 from tqdm import tqdm
 
+import math
+
 nltk.download('punkt')                      
 nltk.download('averaged_perceptron_tagger')
 nltk.download('stopwords')
@@ -93,7 +95,69 @@ class Preprocessor:
         tfidf = list()
 
         ### EDIT HERE ###
+        print('CAL TFIDF START : ', data[0])
+        dataLength = len(data)
 
+        tokenKeyList = []
+        for document in data:
+            for token in document:
+                hasToken = False
+
+                for tokenKey in tokenKeyList:
+                    if (tokenKey == token):
+                        hasToken = True
+                        break
+                
+                if hasToken == False:
+                    tokenKeyList.append(token)
+        print('TOKENKEY LIST DONE : ', tokenKeyList)
+
+        tf = []
+        documentIdx = 0
+        for document in data:
+            tf.append([])
+
+            tokenKeyIdx = 0
+            for tokenKey in tokenKeyList:
+                tf[documentIdx].append(0)
+                for token in document:
+                    if tokenKey == token:
+                        tf[documentIdx][tokenKeyIdx] += 1
+                tokenKeyIdx += 1
+
+            documentIdx += 1
+        print('TF DONE : ', tf[0])
+
+        df = []
+        tokenKeyIdx = 0
+        for tokenKey in tokenKeyList:
+            df.append(0)
+            for document in data:
+                isFounded = False
+                for token in document:
+                    if token == tokenKey:
+                        isFounded = True
+                        break
+                if isFounded == True:
+                    df[tokenKeyIdx] += 1
+            tokenKeyIdx += 1
+        print('DF DONE : ', df)
+
+        idf = []
+        for dfValue in df:
+            idfValue = math.log(dataLength / (1 + dfValue))
+            idf.append(idfValue)
+
+        print('IDF DONE : ', idf)
+        tfidfIdx = 0
+        for tfDocument in tf:
+            tfidf.append([])
+            for tfValue, idfValue in zip(tfDocument, idf):
+                tfidf[tfidfIdx].append(tfValue*idfValue)
+
+            tfidfIdx += 1
+
+        print('TFIDF DONE : ', tfidf[0])
         ### END ###
 
         return tfidf
@@ -123,6 +187,68 @@ class KNN:
         pred = list()
 
         ### EDIT HERE ###
+        for testTfidfValue in test_data:
+            neighborIdx = 0
+            labelNearList = []
+            for neighborTfidfValue in neighbors:
+                neighborLabel = labels[neighborIdx]
+                neighborNear = self.nearness(testTfidfValue, neighborTfidfValue)
+
+                foundedIndex = -1
+                labelNearIndex = 0
+                for labelNear in labelNearList:
+                    if labelNearIndex >= self.k:
+                        break
+                    
+                    curNear = labelNear[1]
+
+                    if self.metric == 'c':
+                        if curNear < neighborNear:
+                            foundedIndex = labelNearIndex
+                            break
+                    elif self.metric == 'm':
+                        if curNear > neighborNear:
+                            foundedIndex = labelNearIndex
+                            break
+                    
+                    labelNearIndex += 1
+
+                if foundedIndex != -1:
+                    labelNearList.insert(foundedIndex, (neighborLabel, neighborNear))
+                else:
+                    labelNearList.append((neighborLabel, neighborNear))
+                if len(labelNearList) > self.k:
+                    labelNearList.pop()
+
+                neighborIdx += 1
+
+            labelCountDict = {}
+            for labelNear in labelNearList:
+                label = labelNear[0]
+
+                if label not in labelCountDict:
+                    labelCountDict[label] = 0
+                
+                labelCountDict[label] += 1
+
+            labelCountList = [(k,v) for k,v in labelCountDict.items()]
+
+            maxCount = 0
+            maxIdx = -1
+            labelIdx = 0
+
+            for (label, count) in labelCountList:
+                if maxCount < count:
+                    maxIdx = labelIdx
+                    maxCount = count
+                labelIdx += 1
+
+            maxLabel = ''
+            if maxIdx != -1:
+                maxLabel = labelCountList[maxIdx][0]
+            print(maxLabel, ' : ',labelNearList)
+            pred.append(maxLabel)
+
 
         ### END ###
 
@@ -144,8 +270,28 @@ class KNN:
         ### EDIT HERE ###
 
         if self.metric == 'c':
+            value1 = 0
+            value2 = 0
+            value3 = 0
+            
+            for xi, yi in zip(x, y):
+                value1 += xi * yi
+
+                value2 += xi * xi
+
+                value3 += yi * yi
+
+            near = value1 / (math.sqrt(value2) * math.sqrt(value3))
             pass
         elif self.metric == 'm':
+            near = 0
+            for xi, yi in zip(x, y):
+                value1 = xi - yi
+
+                if value1 < 0:
+                    value1 *= -1
+                
+                near += value1
             pass
         else:
             self.logger.info("Unknown Metric")

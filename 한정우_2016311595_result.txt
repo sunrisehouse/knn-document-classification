@@ -1,0 +1,24 @@
+K:		7
+Metric	c
+Acc.		0.9396
+
+K:		7
+Metric	m
+Acc.		0.2584
+
+K:		9
+Metric	m
+Acc.		0.2215
+
+K:		9
+Metric	c
+Acc.		0.9463
+
+K:		11
+Metric	c
+Acc.		0.9463
+
+K:		11
+Metric	m
+Acc.		0.2685
+
